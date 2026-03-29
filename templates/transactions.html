@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Records</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
         body {
             background: linear-gradient(to right, #f6d365, #fda085);
             color: #333;
+            min-height: 100vh;
         }
 
         .container {
@@ -19,9 +21,25 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
+        .search-container {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #fff9e6;
+            border-radius: 10px;
+        }
+
         .transaction-table {
             margin-top: 20px;
         }
+
+        .balance-row {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .text-positive { color: #28a745; }
+        .text-negative { color: #dc3545; }
 
         .transaction-actions {
             display: flex;
@@ -32,17 +50,34 @@
         .btn-primary {
             background-color: #f6d365;
             border-color: #f6d365;
+            color: #333;
         }
 
         .btn-primary:hover {
-            background-color: #f6d365;
-            border-color: #f6d365;
+            background-color: #e5c154;
+            border-color: #e5c154;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center">Transaction Records</h1>
+        <h1 class="text-center mb-4">Transaction Records</h1>
+
+        <div class="search-container">
+            <form action="{{ url_for('get_transactions') }}" method="GET" class="form-inline justify-content-center">
+                <div class="input-group w-75">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Cerca per data o importo..." 
+                           value="{{ request.args.get('search', '') }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">Cerca</button>
+                        {% if request.args.get('search') %}
+                            <a href="{{ url_for('get_transactions') }}" class="btn btn-outline-secondary">Reset</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
 
         <table class="table transaction-table">
             <thead>
@@ -56,18 +91,33 @@
                 {% for transaction in transactions %}
                 <tr>
                     <td>{{ transaction.date }}</td>
-                    <td>{{ transaction.amount }}</td>
+                    <td class="{{ 'text-negative' if transaction.amount < 0 else 'text-positive' }}">
+                        {{ transaction.amount }}
+                    </td>
                     <td class="transaction-actions">
                         <a class="btn btn-sm btn-primary" href="{{ url_for('edit_transaction', transaction_id=transaction.id) }}">Edit</a>
                         <a class="btn btn-sm btn-danger" href="{{ url_for('delete_transaction', transaction_id=transaction.id) }}">Delete</a>
                     </td>
                 </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">Nessuna transazione trovata.</td>
+                </tr>
                 {% endfor %}
             </tbody>
+            <tfoot>
+                <tr class="balance-row">
+                    <td class="text-right">Total Balance:</td>
+                    <td class="{{ 'text-negative' if total_balance < 0 else 'text-positive' }}">
+                        {{ total_balance }}
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
         </table>
 
-        <div class="d-flex justify-content-center">
-            <a class="btn btn-success" href="{{ url_for('add_transaction') }}">Add Transaction</a>
+        <div class="d-flex justify-content-center mt-4">
+            <a class="btn btn-success" href="{{ url_for('add_transaction') }}">Add New Transaction</a>
         </div>
     </div>
 </body>
